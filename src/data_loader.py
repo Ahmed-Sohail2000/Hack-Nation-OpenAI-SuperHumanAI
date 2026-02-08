@@ -72,6 +72,10 @@ class EmailDataLoader:
         if not self.loaded:
             self.load()
         
+        # Validate keyword parameter
+        if not keyword or not isinstance(keyword, str) or not keyword.strip():
+            return []
+        
         if search_fields is None:
             search_fields = ['subject', 'body']
         

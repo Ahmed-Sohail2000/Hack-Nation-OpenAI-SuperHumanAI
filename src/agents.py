@@ -270,15 +270,34 @@ class CoordinatorAgent:
     
     def get_stakeholder_relevance(self, topic: str) -> Dict[str, Any]:
         """Get stakeholder relevance for a specific topic."""
+        # Validate topic parameter
+        if not topic or not isinstance(topic, str) or not topic.strip():
+            return {
+                "error": "Topic must be a non-empty string",
+                "topic": topic,
+                "relevance_breakdown": {
+                    "high": [],
+                    "medium": [],
+                    "low": []
+                },
+                "summary": {
+                    "high_count": 0,
+                    "medium_count": 0,
+                    "low_count": 0,
+                    "total_stakeholders": 0
+                }
+            }
+        
         stakeholders_data = self.get_stakeholders(topic=topic)
         
         # Categorize stakeholders by relevance level
+        # Handle case where stakeholders might not have "involvement" field
         high_relevance = [s for s in stakeholders_data["stakeholders"] 
-                         if s["involvement"] >= 5]
+                         if s.get("involvement", 0) >= 5]
         medium_relevance = [s for s in stakeholders_data["stakeholders"] 
-                          if 2 <= s["involvement"] < 5]
+                          if 2 <= s.get("involvement", 0) < 5]
         low_relevance = [s for s in stakeholders_data["stakeholders"] 
-                        if s["involvement"] < 2]
+                        if s.get("involvement", 0) < 2]
         
         return {
             "topic": topic,
