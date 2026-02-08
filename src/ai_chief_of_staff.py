@@ -82,12 +82,19 @@ Top Communicators:
                 relevant_emails.extend(emails)
         
         # Remove duplicates and limit
+        # Use a hash of email content to identify duplicates
         seen = set()
         unique_emails = []
         for email in relevant_emails:
-            email_id = id(email)
-            if email_id not in seen:
-                seen.add(email_id)
+            # Create unique identifier from email content
+            email_key = (
+                email.get('sender', ''),
+                tuple(sorted(email.get('receiver', []))),
+                email.get('subject', ''),
+                email.get('timestamp', '')
+            )
+            if email_key not in seen:
+                seen.add(email_key)
                 unique_emails.append(email)
                 if len(unique_emails) >= limit:
                     break

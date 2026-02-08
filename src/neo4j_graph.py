@@ -85,9 +85,9 @@ class Neo4jGraphDB:
             session.run(
                 "MATCH (s:Person {email: $sender}), (r:Person {email: $receiver}) "
                 "MERGE (s)-[c:COMMUNICATED_WITH]->(r) "
-                "ON CREATE SET c.count = 1, c.subjects = [$subject], c.first_date = $timestamp, c.last_date = $timestamp "
+                "ON CREATE SET c.count = 1, c.subjects = CASE WHEN $subject = '' THEN [] ELSE [$subject] END, c.first_date = $timestamp, c.last_date = $timestamp "
                 "ON MATCH SET c.count = c.count + 1, "
-                "  c.subjects = CASE WHEN $subject IN c.subjects THEN c.subjects ELSE c.subjects + $subject END, "
+                "  c.subjects = CASE WHEN $subject = '' OR $subject IN c.subjects THEN c.subjects ELSE c.subjects + [$subject] END, "
                 "  c.last_date = $timestamp",
                 sender=sender,
                 receiver=receiver,

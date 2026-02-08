@@ -87,11 +87,19 @@ class MemoryAgent:
     
     def get_what_changed(self, days: int = 1) -> Dict[str, Any]:
         """Generate 'What Changed Today' summary."""
-        if self.memory["version"] < 2:
+        current_version = self.memory.get("version", 1)
+        if current_version < 2:
             return {"message": "Insufficient history. Need at least 2 versions to detect changes."}
         
-        current = self.memory["knowledge_base"][f"v{self.memory['version']}"]
-        previous = self.memory["knowledge_base"].get(f"v{self.memory['version']-1}", {})
+        # Safely access current and previous versions
+        current_key = f"v{current_version}"
+        previous_key = f"v{current_version - 1}"
+        
+        if current_key not in self.memory.get("knowledge_base", {}):
+            return {"message": "Current version not found in knowledge base."}
+        
+        current = self.memory["knowledge_base"][current_key]
+        previous = self.memory["knowledge_base"].get(previous_key, {})
         
         changes = {
             "version": self.memory["version"],
@@ -170,10 +178,11 @@ class CriticAgent:
             if len(receivers) > 10:  # High communication volume
                 # Check for topic diversity
                 sender_emails = self.data_loader.get_emails_by_sender(sender)
-                subjects = [e.get('subject', '') for e in sender_emails[:20]]
+                subjects = [e.get('subject', '') for e in sender_emails[:20] if e.get('subject', '').strip()]
                 unique_subjects = len(set([s.lower() for s in subjects if s]))
                 
-                if unique_subjects < len(subjects) * 0.3:  # Low topic diversity
+                # Only check topic diversity if we have subjects to analyze
+                if len(subjects) > 0 and unique_subjects < len(subjects) * 0.3:  # Low topic diversity
                     conflicts.append({
                         "type": "topic_concentration",
                         "person": sender,
