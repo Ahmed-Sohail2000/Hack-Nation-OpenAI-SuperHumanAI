@@ -1,0 +1,6 @@
+# AI Chief of Staff Dependencies
+python-dotenv>=1.0.0
+openai>=1.0.0
+flask>=2.3.0
+flask-cors>=4.0.0
+neo4j>=5.0.0
