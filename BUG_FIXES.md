@@ -71,6 +71,49 @@ let escaped = escapeHtml(text);
 
 **Location**: `static/index.html:720-738`
 
+## Bug 6: Missing Topic Validation ✅ FIXED
+**Issue**: `get_stakeholder_relevance` doesn't validate that `topic` is not None or empty before passing it to `get_stakeholders`, which could cause `AttributeError` when `get_emails_by_keyword` calls `keyword.lower()` on None.
+
+**Fix**: Added input validation at the start of `get_stakeholder_relevance`:
+```python
+if not topic or not isinstance(topic, str) or not topic.strip():
+    return {
+        "error": "Topic must be a non-empty string",
+        # ... error response
+    }
+```
+
+Also added validation in `get_emails_by_keyword` as a safety measure:
+```python
+if not keyword or not isinstance(keyword, str) or not keyword.strip():
+    return []
+```
+
+**Location**: `src/agents.py:271-296`, `src/data_loader.py:64-78`
+
+## Bug 7: Unreliable event.target in switchTab ✅ FIXED
+**Issue**: `switchTab` function uses `event.target.classList.add('active')` which is unreliable because: (1) `event` may not be available in strict mode, (2) if button contains nested elements, `event.target` could reference a child element instead of the button.
+
+**Fix**: Modified function to accept button element as parameter:
+```javascript
+function switchTab(tabName, buttonElement) {
+    // Use the passed button element instead of event.target
+    if (buttonElement) {
+        buttonElement.classList.add('active');
+    } else {
+        // Fallback: find button by tab name
+        // ...
+    }
+}
+```
+
+Updated all onclick handlers to pass `this`:
+```html
+<button class="tab" onclick="switchTab('query', this)">💬 Query AI</button>
+```
+
+**Location**: `static/index.html:630-642`
+
 ---
 
 All bugs verified and fixed! ✅
