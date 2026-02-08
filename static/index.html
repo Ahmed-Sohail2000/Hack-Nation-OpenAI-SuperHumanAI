@@ -856,21 +856,26 @@
                     },
                     physics: {
                         enabled: true,
-                        stabilization: { iterations: 300 },
+                        stabilization: { 
+                            iterations: 500,
+                            updateInterval: 25,
+                            onlyDynamicEdges: false,
+                            fit: true
+                        },
                         barnesHut: {
-                            gravitationalConstant: -3000,
-                            centralGravity: 0.1,
+                            gravitationalConstant: -2000,
+                            centralGravity: 0.05,
                             springLength: 250,
-                            springConstant: 0.04,
-                            damping: 0.09,
+                            springConstant: 0.03,
+                            damping: 0.15,
                             avoidOverlap: 1
                         },
                         repulsion: {
-                            centralGravity: 0.1,
+                            centralGravity: 0.05,
                             springLength: 250,
-                            springConstant: 0.04,
+                            springConstant: 0.03,
                             nodeDistance: 300,
-                            damping: 0.09
+                            damping: 0.15
                         }
                     },
                     interaction: {
@@ -889,12 +894,28 @@
                 
                 network = new vis.Network(container, graphDataVis, options);
                 
-                infoDiv.innerHTML = `
-                    <strong>Graph Statistics:</strong><br>
-                    Nodes (People): ${data.nodes.length}<br>
-                    Edges (Communications): ${data.edges.length}<br>
-                    <em>Drag nodes to rearrange, scroll to zoom, click nodes for details</em>
-                `;
+                // Disable physics after stabilization to prevent continuous movement
+                let stabilizationCount = 0;
+                network.on("stabilizationProgress", function(params) {
+                    const progress = params.iterations / params.total;
+                    infoDiv.innerHTML = `
+                        <div class="loading">Stabilizing graph... ${Math.round(progress * 100)}%</div>
+                    `;
+                });
+                
+                network.on("stabilizationIterationsDone", function() {
+                    stabilizationCount++;
+                    // After stabilization completes, disable physics to stop movement
+                    setTimeout(function() {
+                        network.setOptions({ physics: { enabled: false } });
+                        infoDiv.innerHTML = `
+                            <strong>Graph Statistics:</strong><br>
+                            Nodes (People): ${data.nodes.length}<br>
+                            Edges (Communications): ${data.edges.length}<br>
+                            <em>Drag nodes to rearrange, scroll to zoom, click nodes for details</em>
+                        `;
+                    }, 100);
+                });
                 
                 network.on("click", function (params) {
                     if (params.nodes.length > 0) {
@@ -947,7 +968,25 @@
                 
                 network = new vis.Network(container, { nodes: nodes, edges: edges }, {
                     nodes: { shape: 'dot', size: 20, font: { size: 14 } },
-                    edges: { width: 3, arrows: { to: { enabled: true } } }
+                    edges: { width: 3, arrows: { to: { enabled: true } } },
+                    physics: {
+                        enabled: true,
+                        stabilization: { 
+                            iterations: 300,
+                            fit: true
+                        },
+                        barnesHut: {
+                            gravitationalConstant: -2000,
+                            damping: 0.15
+                        }
+                    }
+                });
+                
+                // Disable physics after stabilization
+                network.on("stabilizationIterationsDone", function() {
+                    setTimeout(function() {
+                        network.setOptions({ physics: { enabled: false } });
+                    }, 100);
                 });
                 
                 infoDiv.innerHTML = `<strong>Person Network:</strong><br>Showing network for: ${email}<br>Nodes: ${data.nodes.length}, Edges: ${data.edges.length}`;
